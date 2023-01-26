@@ -29,7 +29,7 @@ from datetime import datetime
 class WebCam:
     """ Object to represent one of the webcams at MRO """
 
-    def __init__(self, name, URL, userName, password):
+    def __init__(self, name, URL, userName, password=None):
         self.name = name
         self.URL = URL
         self.userName = userName
@@ -43,7 +43,10 @@ class WebCam:
         with open(imagePath, 'wb') as f:
             c = pycurl.Curl()
             c.setopt( c.URL, self.URL)
-            c.setopt( c.USERPWD, self.userName + ":" + self.password )
+            if self.password:
+                c.setopt( c.USERPWD, self.userName + ":" + self.password )
+            else:
+                c.setopt( c.USERPWD, self.userName )
             c.setopt( c.WRITEDATA, f )
             try:
                 c.perform()
@@ -63,7 +66,8 @@ if __name__ == "__main__":
         print( "Usage:", sys.argv[0], "[camera definition file]")
         exit()
 
-    archivePath = "/home/ojf/Pictures/MRO_Webcams/"
+    #archivePath = "/home/ojf/Pictures/MRO_Webcams/"
+    archivePath = "/Users/ramid/Downloads/"
     remotePath = 'public_html/webcams/'
     remoteHost = 'ovid.u.washington.edu'
     user = 'mrouser'
@@ -77,6 +81,7 @@ if __name__ == "__main__":
         cameras.append( WebCam(*line.split()) ) # *args "unwraps" the list from split()
     for camera in cameras:
             print( "Read in camera", camera.name )
+            print( camera.URL, " ", camera.userName, " ", camera.password )
 
 
     while True:
@@ -92,21 +97,21 @@ if __name__ == "__main__":
 
 
         for camera in cameras:
-            camera.retrieve_and_archive_image(path)
+            #camera.retrieve_and_archive_image(path)
             print( datetime.now().strftime("%m/%d %H:%M"), ": image archived from", camera.name )
 
 
         """ Push images to remote server. """
         ssh = SSHClient()
         ssh.load_system_host_keys()
-        ssh.connect(remoteHost, username=user)
-        sftp = ssh.open_sftp()
+        # ssh.connect(remoteHost, username=user)
+        # sftp = ssh.open_sftp()
             
         for camera in cameras:
             if camera.lastImage:
-                sftp.put(camera.lastImage, remotePath + camera.name + ".jpg")
+                #sftp.put(camera.lastImage, remotePath + camera.name + ".jpg")
                 print( datetime.now().strftime("%m/%d %H:%M"), ": Posted image from", camera.name )
-        sftp.close()
+        # sftp.close()
         ssh.close()
 
 
